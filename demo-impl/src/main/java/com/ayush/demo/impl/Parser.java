@@ -7,12 +7,61 @@ import com.couchbase.client.java.CouchbaseCluster;
 import com.couchbase.client.java.bucket.BucketType;
 import com.couchbase.client.java.cluster.BucketSettings;
 import com.couchbase.client.java.cluster.DefaultBucketSettings;
+import com.couchbase.client.java.document.JsonDocument;
+import com.couchbase.client.java.document.json.JsonObject;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
 public class Parser {
     
+    Bucket bucket;
+    Cluster cluster;
+    
     public BucketSettings getBucketSettings() {
+        Config conf = ConfigFactory.load("application.conf");
+        
+        //Create your bucket.....
+        BucketSettings sampleBucket = new DefaultBucketSettings.Builder()
+                .type(BucketType.COUCHBASE)
+                .name(conf.getString("bucket-name"))
+                .password("")
+                .quota(500) // megabytes
+                .replicas(0)
+                .indexReplicas(true)
+                .enableFlush(true)
+                .build();
+        
+        return sampleBucket;
+    }
+    
+    public void loadBucket(Cluster cluster) {
+        
+        Config conf = ConfigFactory.load("application.conf");
+        
+        cluster.clusterManager(conf.getString("couchbase.cluster.username"), conf.getString("couchbase.cluster.password"))
+                .insertBucket(getBucketSettings());
+        bucket = cluster.openBucket(conf.getString("bucket-name"));
+        //return bucket;
+    }
+    
+    public Cluster couchbaseConnector() {
+        Config configuration = ConfigFactory.load("application.conf");
+        try {
+            // Initialize the Connection
+            cluster = CouchbaseCluster.create(configuration.getString("couchbase_contact_point_one"));
+            cluster.authenticate(configuration.getString("couchbase.cluster.username"),
+                    configuration.getString("couchbase.cluster.password"));
+            return cluster;
+        } catch (CouchbaseException ex) {
+            return null;
+        }
+    }
+    
+    public void loadDocument(JsonObject jsonObject){
+        bucket.upsert(JsonDocument.create("id", jsonObject));
+    }
+    
+   /* public BucketSettings getBucketSettings() {
         Config conf = ConfigFactory.load("application.conf");
         
         //Create your bucket.....
@@ -51,5 +100,5 @@ public class Parser {
         } catch (CouchbaseException ex) {
             return null;
         }
-    }
+    }*/
 }

@@ -19,7 +19,7 @@ public interface DemoService extends Service {
     @Override
     default Descriptor descriptor() {
         return named("couchbase").withCalls(
-                restCall(Method.POST, "/api/demo/get", this::insertUser)
+                restCall(Method.POST, "/api/demo/insert ", this::insertUser)
         ).withAutoAcl(true);
     }
 }
